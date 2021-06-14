@@ -1,14 +1,54 @@
-from math import fabs
+from math import fabs, log
 from tkinter import *
 from tkinter import ttk # tkinter의 확장모듈 GUI의 외형을 개선해줌
+import logging # 코드 라인 출력
+# 6~10 디버깅 모듈
+logging.basicConfig(format='%(asctime)s,%(msecs)d %(levelname)-8s [%(filename)s:%(lineno)d] %(message)s',
+    datefmt='%d-%m-%Y:%H:%M:%S',
+    level=logging.DEBUG)
 
+logger = logging.getLogger('log_1')
 
+"""
+버그 리스트 : 
+1: - 연산을 진행할 때 +/- 버튼을 누르면 아무런 작동도 하지 않음 // Fixed
+2: A--B일 때 = 버튼을 눌렀을 때 A - -B=Result 형태로 출력 // Fixed
+3: formula의 값으로 * 대신 X가 들어가서 계산이 안되는 현상 // Fixed
+4: -연산과 +/- 연산이 서로 충돌하는 현상 //Fixed
+5: 수식이 없을때 +/- 버튼이 작동하지 않는 현상
+
+버그 발생 이유 :
+1: - 와  +/- 두 연산에 차이를 주지 않아 발생한 현상 // -에는 공백문자를 주어 해결
+2: 공백 제거 없이 oupPutData 값에 formula를 집어넣어 발생한 현상 // 공백 제거 함수를 생성해 해결
+3: eval 함수에서 * 연산자를 X로 집어넣어 발생한 현상 // 연산하기 전에 X 를 *로 변경하여 해결
+4: 공백을 지우지 않고 연산자를 추가하는 바람에 발생한 현상 // 숫자 입력과 연산자 입력을 나눠 해결
+5: 모르겠음
+
+버그가 있는 기능:
+1: +/-
+2: -
+
+미구현 기능:
+1: %
+2: 1/X
+3: X^2
+4: root
+5: .
+
+디버깅 코드:
+    print("formula =",formula,logger.debug(""))
+    print("outPutData =",outPutData,logger.debug(""))
+    print("strtmp =",strtmp,logger.debug(""))
+    print("inttmp =",inttmp,logger.debug(""))
+
+"""
 tk = Tk()
 
 data = []
 formula = ""
 outPutData = ""
 isSymbol = False
+splice = 0
 
 tk.title("계산기")
 tk.geometry("320x500")
@@ -24,6 +64,7 @@ def insertNum(funcNum):
     check = True
     splice_1 = ""
     splice_2 = ""
+    tmpformula = ""
     if(endSwithIsdigit()):
         check = True
     else:
@@ -33,7 +74,10 @@ def insertNum(funcNum):
     if(check):
         if(funcNum == "="): # 연산 완료 
             isSymbol = True
+            DeleteSpaceFO()
             dataAdd()
+            formula = formula.replace("X", "*")
+            print("formula =",formula,logger.debug(""))
             outPutData += "=" + str(eval(formula))
             entryDelete()
             entryInsert()
@@ -41,23 +85,48 @@ def insertNum(funcNum):
         elif(funcNum == "*"): # X 입력시 출력 형태를 *로 나오는 것을 X로 변환
             isSymbol = True
             formula += funcNum
+            DeleteSpaceO()
             dataAdd()
             entryDelete()
             entryInsert()
-        elif(funcNum == "+" or funcNum == "-" or funcNum == "/" or funcNum.isdigit()):
-            #isSymbol = True
+        elif(funcNum == "+" or funcNum == "-" or funcNum == "/"):
+            isSymbol = True
+            DeleteSpaceFO()
+            if(funcNum == "-"):
+                formula += " "+funcNum+" "
+            else:
+                formula += funcNum
+            print("formula =",formula,logger.debug(""))
+            DeleteSpaceO()
+            print("formula =",formula,logger.debug(""))
+            print("outPutData =",outPutData,logger.debug(""))
+            dataAdd()
+            print("formula =",formula,logger.debug(""))
+            print("outPutData =",outPutData,logger.debug(""))
+            entryDelete()
+            print("outPutData =",outPutData,logger.debug(""))
+            entryInsert()
+        elif(funcNum.isdigit()):
+            print("formula =",formula,logger.debug(""))
             formula += funcNum
-            num.insert("end", funcNum)
-        elif(funcNum == "m"): # +/- 버튼 
+            DeleteSpaceO()
+            dataAdd()
+            entryDelete()
+            entryInsert()
+        elif(funcNum == "m"): # +/- 버튼
+            print("formula =",formula,logger.debug(""))
             funcnumM()
             if(isSymbol):
+                print("??")
                 dataAdd()
             else:
-                dataAdd_m()
+                dataAdd_m(splice)
                 formula = outPutData
+            DeleteSpaceO()
             entryDelete()
             entryInsert()
         elif(funcNum == "E"):
+            DeleteSpaceFO()
             if(isSymbol):
                 for i in range(0, len(formula)):
                     tmp += str(formula[i])
@@ -65,13 +134,8 @@ def insertNum(funcNum):
                         splice_1 = i + 1
                         splice_2 = i - 1
                 if(not(str(formula[splice_2]).isdigit())):
-                    print("splice_2 =",splice_2,"68")
-                    print("formula =",formula,"69")
                     formula = str(tmp[0:splice_2+1])
-                    print("formula =",formula,"71")
                 else:
-                    print("splice_2 =",splice_2,"85")
-                    print("formula =",formula,"86")
                     formula = str(tmp[0:splice_1])
                 dataAdd()
                 entryDelete()
@@ -81,6 +145,19 @@ def insertNum(funcNum):
                 dataAdd()
                 entryDelete()
                 entryInsert()
+        elif(funcNum == "C"):
+            formula = ""
+            dataAdd()
+            entryDelete()
+            entryInsert()
+            isSymbol = False
+        elif(funcNum == "B"):
+            for i in range(0, len(formula) -1):
+                tmpformula += formula[i]
+            formula = tmpformula
+            dataAdd()
+            entryDelete()
+            entryInsert()
         #elif(funcNum == "."):
             
 
@@ -94,22 +171,46 @@ def entryDelete(): # Entry 데이터 삭제
     num.delete(0, "end")
 
 def entryInsert(): # Entry 에 outPutData 출력
+    print("outPutData =",outPutData,logger.debug(""))
     num.insert("end",outPutData)
 
 def dataAdd():  # outPutData에 수식 입력
-    global outPutData
+    global outPutData, formula
     outPutData = ""
+    tmpData = ""
     for i in range(0, len(formula)):
         if(formula[i] == "*"):
             outPutData += "X"
-        else:
+            tmpData += "X"
+        elif(formula[i] != " "):
+            print("formula =",formula[i],logger.debug(""))
             outPutData += formula[i]
+            tmpData += formula[i]
+        else:
+            tmpData += " "
 
-def dataAdd_m():    # outPutData에 수식을 입력하는데 +/- 버튼을 누를 경우 *-1을 하는식으로 계산하기 때문에 수식에 *-1 이 그대로 들어가는 경우를 방지
-    global outPutData
-    outPutData = str(eval(formula))
+    #print("outPutData =",outPutData,"122")
+    print("outPutData =",outPutData,logger.debug(""))
+    formula = tmpData
+    #print("formula =",formula,"124")
 
-def endSwithIsdigit(): #숫자 == TRUE 숫자 != FALSE
+def dataAdd_m(splice):    # outPutData에 수식을 입력하는데 +/- 버튼을 누를 경우 *-1을 하는식으로 계산하기 때문에 수식에 *-1 이 그대로 들어가는 경우를 방지
+    global outPutData,formula
+    # tmp1 = ""
+    formula = str(eval(formula))
+    outPutData = formula
+    # print("formula =",formula,logger.debug(""))
+    #  print("splice =",splice,"125")
+    # tmp1 = formula[splice:splice + 4]
+    # formula = formula[0 : splice]
+    # print("tmp1 =",tmp1,logger.debug(""))
+    #  print("formula =",formula,"131")
+    # formula += " "+str(eval(int(tmp1)))
+    #  print("formula =",formula,"133")
+    # outPutData = formula
+    # print("outPutData =",outPutData,"135")
+
+def endSwithIsdigit(): # 마지막숫자 == TRUE 마지막숫자 != FALSE
     global formula
     returnBool = True
     if(formula == ""):
@@ -129,31 +230,71 @@ def paraIsdigit(funcNum):
     else:
         return False
 
-def funcnumM():
-    global formula
+def funcnumM(): # 버그덩어리
+    global formula, splice
     #print(formula+"???")
     strtmp = ""
     inttmp = 0
     splice = len(formula)
     default = splice
+    print("formula =",formula,logger.debug(""))
     for i in range(0, len(formula)):
         strtmp += formula[i]
         #print(strtmp)
-        if(not(ord(formula[i]) >= ord("0") and ord(formula[i]) <= ord("9") or ord(formula[i]) == ord("-"))):
+        if(formula[i] == " "):
+            strtmp = ""
+            splice -= 1
+            continue
+        elif((not(ord(formula[i]) >= ord("0") and ord(formula[i]) <= ord("9") or ord(formula[i]) == ord("-")))):
             strtmp = ""
             splice = i + 1
-    inttmp = (int(strtmp) * -1)
-    strtmp = str(inttmp)
     if(splice == default):
         formula += "*-1"
+        # print("formula =",formula,"168")
+        # print("isSymbol =",isSymbol,"169")
+        # print("outPutData =",outPutData,"170")
         return
+    print("strtmp =",strtmp,logger.debug(""))
+    inttmp = (int(strtmp) * -1)
+    print("inttmp =",inttmp,logger.debug(""))
+    strtmp = str(inttmp)
+    print("strtmp =",strtmp,logger.debug(""))
+    print("splice =",splice,logger.debug(""))
     dataAdd()
     formula = formula[0:splice]
     formula += strtmp
+    # print("formula =",formula,"175")
 
+def DeleteSpaceO(): # Code08_04 참고 문자열의 공백 삭제 (only outPutData)
+    global formula,outPutData
+    tmp = ""
+    for i in range(0, len(formula)):
+        if(formula[i] != " "):
+            tmp += formula[i]
+    outPutData = tmp
+    #print("outPutData =",outPutData,"222")
+    #print("formula =",formula,"223")
+    # print("issybol =", isSymbol,"224")
 
+def DeleteSpaceFO(): # Code08_04 참고 문자열의 공백 삭제 (formula, outPutData)
+    global formula,outPutData
+    tmp = ""
+    for i in range(0, len(formula)):
+        if(formula[i] != " "):
+            tmp += formula[i]
+    outPutData = tmp
+    formula = outPutData
+    # print("issybol =", isSymbol,"197")
 
-
+def isSpace(): # 문자열의 공백여부 확인
+    tmp = ""
+    for i in range(0, len(formula)):
+        if(formula[i] != " "):
+            tmp += formula[i]
+    if(formula == tmp):
+        return False
+    else :
+        return True
 
 btn0 = ttk.Button(tk, text = "0", command = lambda:insertNum("0"))
 btn0.grid(row = 7, column = 1)
