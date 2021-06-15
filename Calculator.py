@@ -1,4 +1,4 @@
-from math import fabs, log
+from math import fabs, log, sqrt
 from tkinter import *
 from tkinter import ttk # tkinter의 확장모듈 GUI의 외형을 개선해줌
 import logging # 코드 라인 출력
@@ -15,25 +15,25 @@ logger = logging.getLogger('log_1')
 2: A--B일 때 = 버튼을 눌렀을 때 A - -B=Result 형태로 출력 // Fixed
 3: formula의 값으로 * 대신 X가 들어가서 계산이 안되는 현상 // Fixed
 4: -연산과 +/- 연산이 서로 충돌하는 현상 //Fixed
-5: 수식이 없을때 +/- 버튼이 작동하지 않는 현상
+5: 수식이 없을때 +/- 버튼이 작동하지 않는 현상 //Fixed
+6: 수식이 있을 때 +/- 버튼을 누르면 X-1 가 연산이 된 후 나와야 하는데 그대로 출력하는 현상 
+7: eval 함수가 소수점 계산을 정확하게 하지 못하는 현상 //Fixed
+8: funcnumM함수 다른 연산자와 충돌 다수 //delete
 
 버그 발생 이유 :
 1: - 와  +/- 두 연산에 차이를 주지 않아 발생한 현상 // -에는 공백문자를 주어 해결
 2: 공백 제거 없이 oupPutData 값에 formula를 집어넣어 발생한 현상 // 공백 제거 함수를 생성해 해결
 3: eval 함수에서 * 연산자를 X로 집어넣어 발생한 현상 // 연산하기 전에 X 를 *로 변경하여 해결
 4: 공백을 지우지 않고 연산자를 추가하는 바람에 발생한 현상 // 숫자 입력과 연산자 입력을 나눠 해결
-5: 모르겠음
+5: splice값이 예상히지 못한 값으로 들어와 발생 한 현상 // funcnumM 의 elif문에서 not을 빼주어 해결 
+6: 5번 버그를 해결하는 과정에서 발생 funcnumM의 elif 문에서 not을 뺀 이후 발생
+7: eval 함수 자체의 문제로 추정 // 소수 5번째 자리에서 반올림 해주는 형식으로 해결
+8: 기초부터 잘못된 알고리즘 사용에 의한 문제로 추정 // getX함수로 픽스 예정
+8-1 : getX_m 함수를 생성하여 해결 +/-버튼이 눌리면 괄호를 사용하여 구별
 
 버그가 있는 기능:
-1: +/-
-2: -
-
-미구현 기능:
-1: %
-2: 1/X
-3: X^2
-4: root
-5: .
+1: +/- // Fixed
+2: - // Fixed
 
 디버깅 코드:
     print("formula =",formula,logger.debug(""))
@@ -49,6 +49,7 @@ formula = ""
 outPutData = ""
 isSymbol = False
 splice = 0
+lastInputData = ""
 
 tk.title("계산기")
 tk.geometry("320x500")
@@ -59,13 +60,14 @@ num = ttk.Entry(tk, textvariable = value)
 num.grid(row = 0, columnspan = 3)
 
 def insertNum(funcNum):
-    global formula, outPutData, isSymbol
+    global formula, outPutData, isSymbol, lastInputData
     tmp = ""
     check = True
     splice_1 = ""
     splice_2 = ""
     tmpformula = ""
-    if(endSwithIsdigit()):
+    x = ""
+    if(endSwithIsdigit() or formula.endswith(")")):
         check = True
     else:
         check = False
@@ -78,18 +80,21 @@ def insertNum(funcNum):
             dataAdd()
             formula = formula.replace("X", "*")
             print("formula =",formula,logger.debug(""))
-            outPutData += "=" + str(eval(formula))
+            outPutData += "=" + str(round(eval(formula), 5))
+            outPutData = outPutData.replace("XX","^")
             entryDelete()
             entryInsert()
             formula = str(eval(formula))
         elif(funcNum == "*"): # X 입력시 출력 형태를 *로 나오는 것을 X로 변환
+            lastInputData = funcNum
             isSymbol = True
             formula += funcNum
-            DeleteSpaceO()
+            DeleteSpaceFO()
             dataAdd()
             entryDelete()
             entryInsert()
-        elif(funcNum == "+" or funcNum == "-" or funcNum == "/"):
+        elif(funcNum == "+" or funcNum == "-" or funcNum == "/" or funcNum == "%"):
+            lastInputData = funcNum
             isSymbol = True
             DeleteSpaceFO()
             if(funcNum == "-"):
@@ -113,18 +118,19 @@ def insertNum(funcNum):
             dataAdd()
             entryDelete()
             entryInsert()
-        elif(funcNum == "m"): # +/- 버튼
-            print("formula =",formula,logger.debug(""))
-            funcnumM()
-            if(isSymbol):
-                print("??")
-                dataAdd()
-            else:
-                dataAdd_m(splice)
-                formula = outPutData
-            DeleteSpaceO()
-            entryDelete()
-            entryInsert()
+        # elif(funcNum == "m"): # +/- 버튼
+        #     print("formula =",formula,logger.debug(""))
+        #     funcnumM()
+        #     print("formula =",formula,logger.debug(""))
+        #     print("isSymbol =",isSymbol,logger.debug(""))
+        #     if(isSymbol):
+        #         dataAdd()
+        #     else:
+        #         dataAdd_m(splice)
+        #         formula = outPutData
+        #     DeleteSpaceO()
+        #     entryDelete()
+        #     entryInsert()
         elif(funcNum == "E"):
             DeleteSpaceFO()
             if(isSymbol):
@@ -158,8 +164,51 @@ def insertNum(funcNum):
             dataAdd()
             entryDelete()
             entryInsert()
-        #elif(funcNum == "."):
-            
+        elif(funcNum == "."):
+            formula += funcNum
+            DeleteSpaceFO()
+            dataAdd()
+            entryDelete()
+            entryInsert()
+        elif(funcNum == "d"): # 1/X
+            lastInputData = funcNum
+            x = getX()
+            print("x",getX(),logger.debug(""))
+            formula += "1/" + x
+            DeleteSpaceO()
+            dataAdd()
+            entryDelete()
+            entryInsert()
+        elif(funcNum == "^"): # X^2
+            lastInputData = funcNum
+            x = getX()
+            formula += x+"**2"
+            DeleteSpaceO()
+            dataAdd()
+            print("outPutData =",outPutData,logger.debug(""))
+            outPutData = outPutData.replace("XX","^")
+            entryDelete()
+            entryInsert()
+        elif(funcNum == "r"): # root
+            lastInputData = funcNum
+            x = getX()
+            print("x",sqrt(int(x)),logger.debug(""))
+            formula += str(round(sqrt(int(x)),5))
+            DeleteSpaceO()
+            dataAdd()
+            entryDelete()
+            entryInsert()
+        elif(funcNum == "m"): # +/-
+            x = getX_m()
+            print("x",x,logger.debug(""))
+            x = int(x) * -1
+            formula += "("+str(x)+")"
+            DeleteSpaceO()
+            dataAdd()
+            entryDelete()
+            entryInsert()
+
+
 
 def arithmetic(funcNum): # 사칙연산 검사 사칙연산 == TRUE 사칙연산 != FALSE
     if(funcNum.endswith("*") == True or funcNum.endswith("/") == True or funcNum.endswith("-") == True or funcNum.endswith("+") == True):
@@ -190,6 +239,7 @@ def dataAdd():  # outPutData에 수식 입력
             tmpData += " "
 
     #print("outPutData =",outPutData,"122")
+    print("formula =",formula,logger.debug(""))
     print("outPutData =",outPutData,logger.debug(""))
     formula = tmpData
     #print("formula =",formula,"124")
@@ -240,30 +290,29 @@ def funcnumM(): # 버그덩어리
     print("formula =",formula,logger.debug(""))
     for i in range(0, len(formula)):
         strtmp += formula[i]
-        #print(strtmp)
         if(formula[i] == " "):
             strtmp = ""
             splice -= 1
             continue
-        elif((not(ord(formula[i]) >= ord("0") and ord(formula[i]) <= ord("9") or ord(formula[i]) == ord("-")))):
+        elif(((ord(formula[i]) >= ord("0") and ord(formula[i]) <= ord("9") or ord(formula[i]) == ord("-")))):
             strtmp = ""
             splice = i + 1
     if(splice == default):
+        print(logger.debug(""))
         formula += "*-1"
-        # print("formula =",formula,"168")
-        # print("isSymbol =",isSymbol,"169")
-        # print("outPutData =",outPutData,"170")
         return
     print("strtmp =",strtmp,logger.debug(""))
     inttmp = (int(strtmp) * -1)
     print("inttmp =",inttmp,logger.debug(""))
-    strtmp = str(inttmp)
+    if(lastInputData == "-"):
+        strtmp = " "+str(inttmp)
+    else:
+        strtmp = str(inttmp)
     print("strtmp =",strtmp,logger.debug(""))
     print("splice =",splice,logger.debug(""))
-    dataAdd()
+    #dataAdd()
     formula = formula[0:splice]
     formula += strtmp
-    # print("formula =",formula,"175")
 
 def DeleteSpaceO(): # Code08_04 참고 문자열의 공백 삭제 (only outPutData)
     global formula,outPutData
@@ -295,6 +344,57 @@ def isSpace(): # 문자열의 공백여부 확인
         return False
     else :
         return True
+
+def getX():
+    global formula
+    reverseStr = ""
+    forwardStr = ""
+    splice = 0
+    for i in range(len(formula) - 1, -1, -1):
+        if(formula[i] == " " or (not(ord(formula[i]) >= ord("0") and ord(formula[i]) <= ord("9")))):
+            print("i",i,logger.debug(""))
+            splice = i + 1
+            break;
+        else :
+            reverseStr += formula[i]
+    for i in range(len(reverseStr) - 1, -1, -1):
+        print("x",reverseStr,logger.debug(""))
+        forwardStr += reverseStr[i]
+    print("x",forwardStr,logger.debug(""))
+    formula = formula[0:splice]
+    return forwardStr
+
+def getX_m():
+    global formula
+    reverseStr = ""
+    forwardStr = ""
+    splice = 0
+    isPare = False
+    if(formula.endswith(")")):
+        isPare = True
+    for i in range(len(formula) - 1, -1, -1):
+        if(isPare):
+            if(formula[i] == "("):
+                splice = i
+                break
+            else:
+                if(formula[i] == ")"):
+                    continue
+                reverseStr += formula[i]
+        else :
+            if(formula[i] == " " or (not(ord(formula[i]) >= ord("0") and ord(formula[i]) <= ord("9")))):
+                print("i",i,logger.debug(""))
+                splice = i + 1
+                break;
+            else :
+                reverseStr += formula[i]
+    for i in range(len(reverseStr) - 1, -1, -1):
+        print("x",reverseStr,logger.debug(""))
+        forwardStr += reverseStr[i]
+    print("x",forwardStr,logger.debug(""))
+    formula = formula[0:splice]
+    print("formula",formula,logger.debug(""))
+    return forwardStr
 
 btn0 = ttk.Button(tk, text = "0", command = lambda:insertNum("0"))
 btn0.grid(row = 7, column = 1)
