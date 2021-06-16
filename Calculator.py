@@ -42,6 +42,7 @@ logger = logging.getLogger('log_1')
     print("inttmp =",inttmp,logger.debug(""))
 
 """
+
 tk = Tk()
 
 data = []
@@ -50,16 +51,34 @@ outPutData = ""
 isSymbol = False
 splice = 0
 lastInputData = ""
+keyvalue = ""
 
 tk.title("계산기")
-tk.geometry("320x500")
-
+tk.geometry("350x500")
 
 value = StringVar(tk, value="")
-num = ttk.Entry(tk, textvariable = value)
-num.grid(row = 0, columnspan = 3)
+num = ttk.Entry(tk, textvariable = value, width=30)
+num.grid(row = 0, columnspan = 4)
+
+def keyPressed(event):
+    global keyvalue
+    keyvalue = event.char
+    insertNum(keyvalue)
+
+def resultReturn(event):
+    insertNum("=")
+
+frame = Frame(tk, width=0, height=0)
+frame.bind("<Key>", keyPressed) 
+frame.bind("<Return>", resultReturn)
+frame.place(x=0, y=0)
+
+frame.focus_set()
+
+
 
 def insertNum(funcNum):
+    frame.focus_set()
     global formula, outPutData, isSymbol, lastInputData
     tmp = ""
     check = True
@@ -207,6 +226,8 @@ def insertNum(funcNum):
             dataAdd()
             entryDelete()
             entryInsert()
+        else:
+            return
 
 
 
