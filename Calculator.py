@@ -19,6 +19,8 @@ logger = logging.getLogger('log_1')
 6: 수식이 있을 때 +/- 버튼을 누르면 X-1 가 연산이 된 후 나와야 하는데 그대로 출력하는 현상 
 7: eval 함수가 소수점 계산을 정확하게 하지 못하는 현상 //Fixed
 8: funcnumM함수 다른 연산자와 충돌 다수 //delete
+9: 소숫점 입력 이후 +/- 버튼을 누를 경우 소숫점 이후의 수만 -되는 현상 
+10: 특정 상황에서 +/- 버튼을 누르면 정상적으로 동작하지 않고 왼쪽 상단에 -가 출력되는 현상
 
 버그 발생 이유 :
 1: - 와  +/- 두 연산에 차이를 주지 않아 발생한 현상 // -에는 공백문자를 주어 해결
@@ -62,7 +64,10 @@ num.grid(row = 0, columnspan = 4)
 
 def keyPressed(event):
     global keyvalue
-    keyvalue = event.char
+    if(event.char == ""):
+        keyvalue = "C"
+    else :
+        keyvalue = event.char
     insertNum(keyvalue)
 
 def resultReturn(event):
@@ -403,10 +408,10 @@ def getX_m():
                     continue
                 reverseStr += formula[i]
         else :
-            if(formula[i] == " " or (not(ord(formula[i]) >= ord("0") and ord(formula[i]) <= ord("9")))):
+            if(formula[i] == " " or (not(ord(formula[i]) >= ord("0") and ord(formula[i]) <= ord("9") and formula[i] == "."))):
                 print("i",i,logger.debug(""))
                 splice = i + 1
-                break;
+                break
             else :
                 reverseStr += formula[i]
     for i in range(len(reverseStr) - 1, -1, -1):
