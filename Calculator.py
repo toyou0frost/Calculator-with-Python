@@ -19,8 +19,11 @@ logger = logging.getLogger('log_1')
 6: 수식이 있을 때 +/- 버튼을 누르면 X-1 가 연산이 된 후 나와야 하는데 그대로 출력하는 현상 
 7: eval 함수가 소수점 계산을 정확하게 하지 못하는 현상 //Fixed
 8: funcnumM함수 다른 연산자와 충돌 다수 //delete
-9: 소숫점 입력 이후 +/- 버튼을 누를 경우 소숫점 이후의 수만 -되는 현상 
-10: 특정 상황에서 +/- 버튼을 누르면 정상적으로 동작하지 않고 왼쪽 상단에 -가 출력되는 현상
+9: 소숫점 입력 이후 +/- 버튼을 누를 경우 소숫점 이후의 수만 -되는 현상  // Fixed
+10: 특정 상황에서 +/- 버튼을 누르면 정상적으로 동작하지 않고 왼쪽 상단에 -가 출력되는 현상 // unknown
+11 : root 를 연속해서 누를 경우 소숫점에 계속해서 생기는 현상 
+12 : +/- 버튼 개선 이후 CE버튼 정상작동 X // delete
+13 : 12번 연장선상 괄호로 감싼 숫자 or 연산자는 삭제 X // Fixed
 
 버그 발생 이유 :
 1: - 와  +/- 두 연산에 차이를 주지 않아 발생한 현상 // -에는 공백문자를 주어 해결
@@ -31,17 +34,22 @@ logger = logging.getLogger('log_1')
 6: 5번 버그를 해결하는 과정에서 발생 funcnumM의 elif 문에서 not을 뺀 이후 발생
 7: eval 함수 자체의 문제로 추정 // 소수 5번째 자리에서 반올림 해주는 형식으로 해결
 8: 기초부터 잘못된 알고리즘 사용에 의한 문제로 추정 // getX함수로 픽스 예정
-8-1 : getX_m 함수를 생성하여 해결 +/-버튼이 눌리면 괄호를 사용하여 구별
+8-1: getX_m 함수를 생성하여 해결 +/-버튼이 눌리면 괄호를 사용하여 구별
+9: .을 연산자로 인식하여 발생한 현상 // .을 숫자로 인식하게 하고 x * -1 의 x값을 float형으로 주어 해결
+10: keyboard 입력 기능을 추가하다가 발견한 현상
+11: 소숫점을 연산자로 인식하여 발생한 현상 // 임시 방편으로 연속적인 root 계산을 막아둠
+12: 괄호를 포함하고 있는 수는 ( 를 남기고 데이터가 지워짐 // CE 알고리즘 변경이후 자연스럽게 해결
+13: 숫자 이외의 값들은 제거되지 않는 현상 // 연산자는 윈도우 계산기 기준으로 삭제하지 않는게 정상작동 소숫점은 9번과 동일한 방법으로 해결 괄호는 getX_m 함수와 같은 방법으로 해결
 
 버그가 있는 기능:
 1: +/- // Fixed
 2: - // Fixed
 
 디버깅 코드:
-    print("formula =",formula,logger.debug(""))
-    print("outPutData =",outPutData,logger.debug(""))
-    print("strtmp =",strtmp,logger.debug(""))
-    print("inttmp =",inttmp,logger.debug(""))
+    # # print("formula =",formula,logger.debug(""))
+    # # print("outPutData =",outPutData,logger.debug(""))
+    # # print("strtmp =",strtmp,logger.debug(""))
+    # # print("inttmp =",inttmp,logger.debug(""))
 
 """
 
@@ -66,6 +74,8 @@ def keyPressed(event):
     global keyvalue
     if(event.char == ""):
         keyvalue = "C"
+    # elif(event.char = ""):
+    #     keyvalue = "B"
     else :
         keyvalue = event.char
     insertNum(keyvalue)
@@ -103,7 +113,7 @@ def insertNum(funcNum):
             DeleteSpaceFO()
             dataAdd()
             formula = formula.replace("X", "*")
-            print("formula =",formula,logger.debug(""))
+            # # print("formula =",formula,logger.debug(""))
             outPutData += "=" + str(round(eval(formula), 5))
             outPutData = outPutData.replace("XX","^")
             entryDelete()
@@ -125,28 +135,28 @@ def insertNum(funcNum):
                 formula += " "+funcNum+" "
             else:
                 formula += funcNum
-            print("formula =",formula,logger.debug(""))
+            # # print("formula =",formula,logger.debug(""))
             DeleteSpaceO()
-            print("formula =",formula,logger.debug(""))
-            print("outPutData =",outPutData,logger.debug(""))
+            # # print("formula =",formula,logger.debug(""))
+            # # print("outPutData =",outPutData,logger.debug(""))
             dataAdd()
-            print("formula =",formula,logger.debug(""))
-            print("outPutData =",outPutData,logger.debug(""))
+            # # print("formula =",formula,logger.debug(""))
+            # # print("outPutData =",outPutData,logger.debug(""))
             entryDelete()
-            print("outPutData =",outPutData,logger.debug(""))
+            # # print("outPutData =",outPutData,logger.debug(""))
             entryInsert()
         elif(funcNum.isdigit()):
-            print("formula =",formula,logger.debug(""))
+            # # print("formula =",formula,logger.debug(""))
             formula += funcNum
             DeleteSpaceO()
             dataAdd()
             entryDelete()
             entryInsert()
         # elif(funcNum == "m"): # +/- 버튼
-        #     print("formula =",formula,logger.debug(""))
+        #     # # print("formula =",formula,logger.debug(""))
         #     funcnumM()
-        #     print("formula =",formula,logger.debug(""))
-        #     print("isSymbol =",isSymbol,logger.debug(""))
+        #     # # print("formula =",formula,logger.debug(""))
+        #     # # print("isSymbol =",isSymbol,logger.debug(""))
         #     if(isSymbol):
         #         dataAdd()
         #     else:
@@ -157,6 +167,11 @@ def insertNum(funcNum):
         #     entryInsert()
         elif(funcNum == "E"):
             DeleteSpaceFO()
+            CE()
+            """
+            x = getX()
+            print("x",x,logger.debug(""))
+            x = 0
             if(isSymbol):
                 for i in range(0, len(formula)):
                     tmp += str(formula[i])
@@ -171,10 +186,10 @@ def insertNum(funcNum):
                 entryDelete()
                 entryInsert()
             else:
-                formula = ""
-                dataAdd()
-                entryDelete()
-                entryInsert()
+            """
+            dataAdd()
+            entryDelete()
+            entryInsert()
         elif(funcNum == "C"):
             formula = ""
             dataAdd()
@@ -197,7 +212,7 @@ def insertNum(funcNum):
         elif(funcNum == "d"): # 1/X
             lastInputData = funcNum
             x = getX()
-            print("x",getX(),logger.debug(""))
+            # # print("x",getX(),logger.debug(""))
             formula += "1/" + x
             DeleteSpaceO()
             dataAdd()
@@ -209,14 +224,16 @@ def insertNum(funcNum):
             formula += x+"**2"
             DeleteSpaceO()
             dataAdd()
-            print("outPutData =",outPutData,logger.debug(""))
+            # # print("outPutData =",outPutData,logger.debug(""))
             outPutData = outPutData.replace("XX","^")
             entryDelete()
             entryInsert()
         elif(funcNum == "r"): # root
+            if(lastInputData == "r"):
+                return
             lastInputData = funcNum
             x = getX()
-            print("x",sqrt(int(x)),logger.debug(""))
+            # # print("x",sqrt(int(x)),logger.debug(""))
             formula += str(round(sqrt(int(x)),5))
             DeleteSpaceO()
             dataAdd()
@@ -224,8 +241,9 @@ def insertNum(funcNum):
             entryInsert()
         elif(funcNum == "m"): # +/-
             x = getX_m()
-            print("x",x,logger.debug(""))
-            x = int(x) * -1
+            # # print("x",x,logger.debug(""))
+            x = float(x) * -1
+            # # print("x",x,logger.debug(""))
             formula += "("+str(x)+")"
             DeleteSpaceO()
             dataAdd()
@@ -246,7 +264,7 @@ def entryDelete(): # Entry 데이터 삭제
     num.delete(0, "end")
 
 def entryInsert(): # Entry 에 outPutData 출력
-    print("outPutData =",outPutData,logger.debug(""))
+    # # print("outPutData =",outPutData,logger.debug(""))
     num.insert("end",outPutData)
 
 def dataAdd():  # outPutData에 수식 입력
@@ -258,33 +276,33 @@ def dataAdd():  # outPutData에 수식 입력
             outPutData += "X"
             tmpData += "X"
         elif(formula[i] != " "):
-            print("formula =",formula[i],logger.debug(""))
+            # # print("formula =",formula[i],logger.debug(""))
             outPutData += formula[i]
             tmpData += formula[i]
         else:
             tmpData += " "
 
-    #print("outPutData =",outPutData,"122")
-    print("formula =",formula,logger.debug(""))
-    print("outPutData =",outPutData,logger.debug(""))
+    ## # print("outPutData =",outPutData,"122")
+    # # print("formula =",formula,logger.debug(""))
+    # # print("outPutData =",outPutData,logger.debug(""))
     formula = tmpData
-    #print("formula =",formula,"124")
+    ## # print("formula =",formula,"124")
 
 def dataAdd_m(splice):    # outPutData에 수식을 입력하는데 +/- 버튼을 누를 경우 *-1을 하는식으로 계산하기 때문에 수식에 *-1 이 그대로 들어가는 경우를 방지
     global outPutData,formula
     # tmp1 = ""
     formula = str(eval(formula))
     outPutData = formula
-    # print("formula =",formula,logger.debug(""))
-    #  print("splice =",splice,"125")
+    # # # print("formula =",formula,logger.debug(""))
+    #  # # print("splice =",splice,"125")
     # tmp1 = formula[splice:splice + 4]
     # formula = formula[0 : splice]
-    # print("tmp1 =",tmp1,logger.debug(""))
-    #  print("formula =",formula,"131")
+    # # # print("tmp1 =",tmp1,logger.debug(""))
+    #  # # print("formula =",formula,"131")
     # formula += " "+str(eval(int(tmp1)))
-    #  print("formula =",formula,"133")
+    #  # # print("formula =",formula,"133")
     # outPutData = formula
-    # print("outPutData =",outPutData,"135")
+    # # # print("outPutData =",outPutData,"135")
 
 def endSwithIsdigit(): # 마지막숫자 == TRUE 마지막숫자 != FALSE
     global formula
@@ -297,7 +315,7 @@ def endSwithIsdigit(): # 마지막숫자 == TRUE 마지막숫자 != FALSE
         else:
             returnBool = False
             #tk.title(formula)
-    #print(returnBool)
+    ## # print(returnBool)
     return returnBool
 
 def paraIsdigit(funcNum):
@@ -305,15 +323,15 @@ def paraIsdigit(funcNum):
         return True
     else:
         return False
-
+"""
 def funcnumM(): # 버그덩어리
     global formula, splice
-    #print(formula+"???")
+    ## # print(formula+"???")
     strtmp = ""
     inttmp = 0
     splice = len(formula)
     default = splice
-    print("formula =",formula,logger.debug(""))
+    # # print("formula =",formula,logger.debug(""))
     for i in range(0, len(formula)):
         strtmp += formula[i]
         if(formula[i] == " "):
@@ -324,22 +342,22 @@ def funcnumM(): # 버그덩어리
             strtmp = ""
             splice = i + 1
     if(splice == default):
-        print(logger.debug(""))
+        # # print(logger.debug(""))
         formula += "*-1"
         return
-    print("strtmp =",strtmp,logger.debug(""))
+    # # print("strtmp =",strtmp,logger.debug(""))
     inttmp = (int(strtmp) * -1)
-    print("inttmp =",inttmp,logger.debug(""))
+    # # print("inttmp =",inttmp,logger.debug(""))
     if(lastInputData == "-"):
         strtmp = " "+str(inttmp)
     else:
         strtmp = str(inttmp)
-    print("strtmp =",strtmp,logger.debug(""))
-    print("splice =",splice,logger.debug(""))
+    # # print("strtmp =",strtmp,logger.debug(""))
+    # # print("splice =",splice,logger.debug(""))
     #dataAdd()
     formula = formula[0:splice]
     formula += strtmp
-
+"""
 def DeleteSpaceO(): # Code08_04 참고 문자열의 공백 삭제 (only outPutData)
     global formula,outPutData
     tmp = ""
@@ -347,9 +365,9 @@ def DeleteSpaceO(): # Code08_04 참고 문자열의 공백 삭제 (only outPutDa
         if(formula[i] != " "):
             tmp += formula[i]
     outPutData = tmp
-    #print("outPutData =",outPutData,"222")
-    #print("formula =",formula,"223")
-    # print("issybol =", isSymbol,"224")
+    ## # print("outPutData =",outPutData,"222")
+    ## # print("formula =",formula,"223")
+    # # # print("issybol =", isSymbol,"224")
 
 def DeleteSpaceFO(): # Code08_04 참고 문자열의 공백 삭제 (formula, outPutData)
     global formula,outPutData
@@ -359,7 +377,7 @@ def DeleteSpaceFO(): # Code08_04 참고 문자열의 공백 삭제 (formula, out
             tmp += formula[i]
     outPutData = tmp
     formula = outPutData
-    # print("issybol =", isSymbol,"197")
+    # # # print("issybol =", isSymbol,"197")
 
 def isSpace(): # 문자열의 공백여부 확인
     tmp = ""
@@ -377,16 +395,16 @@ def getX():
     forwardStr = ""
     splice = 0
     for i in range(len(formula) - 1, -1, -1):
-        if(formula[i] == " " or (not(ord(formula[i]) >= ord("0") and ord(formula[i]) <= ord("9")))):
-            print("i",i,logger.debug(""))
+        if(formula[i] == " " or (not(ord(formula[i]) >= ord("0") and ord(formula[i]) <= ord("9") or formula[i] == "."))):
+            # # print("i",i,logger.debug(""))
             splice = i + 1
             break;
         else :
             reverseStr += formula[i]
     for i in range(len(reverseStr) - 1, -1, -1):
-        print("x",reverseStr,logger.debug(""))
+        # # print("x",reverseStr,logger.debug(""))
         forwardStr += reverseStr[i]
-    print("x",forwardStr,logger.debug(""))
+    # # print("x",forwardStr,logger.debug(""))
     formula = formula[0:splice]
     return forwardStr
 
@@ -408,19 +426,32 @@ def getX_m():
                     continue
                 reverseStr += formula[i]
         else :
-            if(formula[i] == " " or (not(ord(formula[i]) >= ord("0") and ord(formula[i]) <= ord("9") and formula[i] == "."))):
-                print("i",i,logger.debug(""))
+            if(formula[i] == " " or (not(ord(formula[i]) >= ord("0") and ord(formula[i]) <= ord("9") or formula[i] == "."))):
+                # # # print("i",i,logger.debug(""))
                 splice = i + 1
                 break
             else :
                 reverseStr += formula[i]
     for i in range(len(reverseStr) - 1, -1, -1):
-        print("x",reverseStr,logger.debug(""))
+        # # # print("x",reverseStr,logger.debug(""))
         forwardStr += reverseStr[i]
-    print("x",forwardStr,logger.debug(""))
+    # # # print("x",forwardStr,logger.debug(""))
     formula = formula[0:splice]
-    print("formula",formula,logger.debug(""))
+    # # # print("formula",formula,logger.debug(""))
     return forwardStr
+
+def CE():
+    global formula
+    splice = 0
+    if(formula.endswith(")")):
+        for i in range(len(formula)-1, -1, -1):
+            if(formula[i] == "("):
+                splice = i
+                break
+        formula = formula[0:splice]
+    else:
+        getX()
+
 
 btn0 = ttk.Button(tk, text = "0", command = lambda:insertNum("0"))
 btn0.grid(row = 7, column = 1)
